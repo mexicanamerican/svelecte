@@ -1,15 +1,15 @@
 import Sifter from './sifter.js';
 
-export function initSelection(initialValue, valueAsObject, config) {
+export function initSelection(options, initialValue, valueAsObject, config) {
   if (valueAsObject) return Array.isArray(initialValue) ? initialValue : [initialValue];
 
-  const _initialValue = Array.isArray(initialValue) ? initialValue : [initialValue];
+  const initialValue_array = Array.isArray(initialValue) ? initialValue : [initialValue];
   const valueField = config.labelAsValue ? config.labelField : config.valueField;
 
-  const initialSelection = this/** options */.reduce((res, val, i) => {
+  const initialSelection = options.reduce((res, val, i) => {
     if (val[config.optItems] && val[config.optItems].length) {  // handle groups
       const selected = val[config.optItems].reduce((res, groupVal) => {
-        if (_initialValue.includes(groupVal[valueField])) res.push(groupVal);
+        if (initialValue_array.includes(groupVal[valueField])) res.push(groupVal);
         return res;
       }, []);
       if (selected.length) {
@@ -17,7 +17,7 @@ export function initSelection(initialValue, valueAsObject, config) {
         return res;
       }
     }
-    if (_initialValue.includes(typeof val === 'object' ? val[valueField] : (config.labelAsValue ? val : i))) {
+    if (initialValue_array.includes(typeof val === 'object' ? val[valueField] : (config.labelAsValue ? val : i))) {
       if (config.isOptionArray) {
         // initial options are not transformed, therefore we need to create object from given option
         val = {
@@ -31,11 +31,22 @@ export function initSelection(initialValue, valueAsObject, config) {
   }, []);
 
   return initialSelection
-    .sort((a, b) => _initialValue.indexOf(a[valueField]) < _initialValue.indexOf(b[valueField]) ? -1 : 1)
+    .sort((a, b) => initialValue_array.indexOf(a[valueField]) < initialValue_array.indexOf(b[valueField]) ? -1 : 1)
+}
+
+export function ensureObjectArray(options, valueField, labelField) {
+  console.log('?', typeof options[0] === 'object')
+  return typeof options[0] === 'object'
+    ? options
+    : options.map(arrayValue => ({
+      [valueField || 'value']: arrayValue,
+      [labelField || 'text']: arrayValue
+    }));
 }
 
 export function flatList(options, config) {
   const flatOpts = options.reduce((res, opt, i) => {
+    // TODO: DEPRECATE
     if (config.isOptionArray) {
       res.push({
         [config.valueField]: i,
@@ -60,6 +71,7 @@ export function flatList(options, config) {
 }
 
 function updateOptionProps(options, config) {
+  // TODO: DEPRECATE
   if (config.isOptionArray) {
     if (!config.optionProps) {
       config.optionProps = ['value', 'label'];
@@ -74,7 +86,7 @@ function updateOptionProps(options, config) {
 
 export function getFilterProps(object) {
   if (object.options) object = object.options[0];
-  const exclude = ['$disabled', '$isGroupHeader', '$isGroupItem'];
+  const exclude = ['$disabled', '$isGroupHeader', '$isGroupItem', '$created'];
   return Object.keys(object).filter(prop => !exclude.includes(prop));
 }
 

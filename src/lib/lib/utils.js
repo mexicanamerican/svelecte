@@ -12,7 +12,8 @@ export function isOutOfViewport(elem) {
 
   out.top = parentBounding.top < 0;
   out.left = parentBounding.left < 0;
-  out.bottom = parentBounding.bottom + bounding.height > (window.innerHeight || document.documentElement.clientHeight); 
+  out.bottom = parentBounding.bottom + bounding.height > (window.innerHeight || document.documentElement.clientHeight)
+    && parentBounding.top > bounding.height && ((window.innerHeight || document.documentElement.clientHeight) > bounding.height + 50); 
   out.right = parentBounding.right > (window.innerWidth || document.documentElement.clientWidth);
   out.any = out.top || out.left || out.bottom || out.right;
 
@@ -66,10 +67,11 @@ export function debounce(fn, delay) {
 let itemHtml;
 
 export function highlightSearch(item, isSelected, $inputValue, formatter, disableHighlight) {
-  const itemHtmlText = formatter ? formatter(item, isSelected, $inputValue) : item;
+  const itemHtmlText = formatter(item, isSelected, $inputValue);
   
   if ($inputValue == '' || item.isSelected || disableHighlight) {
-    return '<div class="sv-item-content">' + itemHtmlText + '</div>';
+    return itemHtmlText;
+    // return '<div class="sv-item-content">' + itemHtmlText + '</div>';
   }
 
   if (!itemHtml) {
@@ -84,7 +86,7 @@ export function highlightSearch(item, isSelected, $inputValue, formatter, disabl
     highlight(itemHtml, pat);
   });
   
-  return itemHtml.outerHTML;
+  return itemHtml.innerHTML;
 }
 
 /**
@@ -122,6 +124,10 @@ const highlight = function(node, regex) {
 
 /**
  * Automatic setter for 'valueField' or 'labelField' when they are not set
+ * 
+ * @param {string} type
+ * @param {array} options
+ * @param {object} config
  */
 export function fieldInit(type, options, config) {
   const isValue = type === 'value';
@@ -129,7 +135,7 @@ export function fieldInit(type, options, config) {
   let val = isValue  ? 'value' : 'text';              // selectize style defaults
   if (options && options.length) {
     const firstItem = options[0][config.optItems] ? options[0][config.optItems][0] : options[0];
-    if (!firstItem) return val;
+    if (!firstItem || typeof firstItem === 'string') return val;
     const autoAddItem = isValue ? 0 : 1;
     const guessList = isValue
       ? ['id', 'value', 'ID']
@@ -144,7 +150,7 @@ export function fieldInit(type, options, config) {
 /**
  * Detect Mac device
  * 
- * @returns {bool}
+ * @returns {boolean}
  */
 export function iOS() {
   return [
@@ -162,7 +168,7 @@ export function iOS() {
 /**
  * Detects if on android device
  * 
- * @returns {bool}
+ * @returns {boolean}
  */
 export function android() {
   return navigator.userAgent.toLowerCase().includes('android');
@@ -192,3 +198,17 @@ export function defaultCreateTransform(inputValue, creatablePrefix, valueField, 
     [labelField]: creatablePrefix + inputValue,
   }
 }
+
+/**
+ * Escape HTML
+ * @param {string} html 
+ * @returns {string}
+ */
+export function escapeHtml(html) {
+  return `${html}`
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
